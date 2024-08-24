@@ -4,11 +4,13 @@ const jwt = require("jsonwebtoken");
 const http = require("http");
 const path = require("path");
 const socketIo = require("socket.io");
-const Message = require('./models/message');
 const redisAdapter = require("socket.io-redis");
 const rateLimit = require("express-rate-limit");
-const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/auth"); 
+const messagesRoutes = require("./routes/messages"); 
+const profileRoutes = require("./routes/profile"); 
 const authenticateToken = require("./middleware/authentication");
+const Message = require('./models/message');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,10 +21,21 @@ const JWT_SECRET = process.env.JWT_SECRET || 'trwebombekueasloab';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/auth", authRoutes);
+app.use("/api/messages", messagesRoutes);
+app.use("/api/profile", profileRoutes);
 
-app.set('trust proxy', 1);
+// // Import Routes
+// const authRoutes = require("./routes/auth");
+// const messagesRoutes = require("./routes/messages");
+// const profileRoutes = require("./routes/profile");
+
+// Chat route
+app.get("/chat", authenticateToken, (req, res) => {
+    res.sendFile(path.join(__dirname, "/public", "chat.html"));
+});
 
 // Rate Limiting
+app.set('trust proxy', 1);
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
@@ -37,10 +50,9 @@ io.on("connection", (socket) => {
 
     socket.on("chat message", async (data) => {
         try {
-            // Save message to the database
             const message = new Message({ user: data.user, message: data.message });
             await message.save();
-            io.emit("chat message", data); // Broadcast message to all connected clients
+            io.emit("chat message", data);
         } catch (err) {
             console.error("Error saving message:", err);
         }
@@ -55,32 +67,7 @@ io.on("connection", (socket) => {
     });
 });
 
-// Routes
-app.use('/api', authenticateToken);
-app.get("/chat", authenticateToken, (req, res) => {
-    res.sendFile(path.join(__dirname, "/public", "chat.html"));
-});
 
-app.get("/profile", authenticateToken, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.userId).select("-password");
-        res.json(user);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ msg: "Server error" });
-    }
-});
-
-app.post("/profile/avatar", authenticateToken, async (req, res) => {
-    const { avatar } = req.body;
-    try {
-        await User.findByIdAndUpdate(req.user.userId, { avatar });
-        res.json({ message: "Avatar updated" });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ msg: "Server error" });
-    }
-});
 
 // Database Connection and Server Start
 mongoose

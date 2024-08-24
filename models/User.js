@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+const Schema = mongoose.schema;
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -17,8 +17,8 @@ const userSchema = new mongoose.Schema({
         required: true,
     },
     avatar: {
-        type: String,  // URL or Base64 string of the avatar image
-        default: "default-avatar.png",  // Default avatar image
+        type: String,
+        default: "default-avatar.png"
     },
 });
 
@@ -31,4 +31,4 @@ userSchema.pre("save", async function (next) {
 
 const User = mongoose.model("User", userSchema);
 
-module.exports = User;
+module.exports = ('User', userSchema);
