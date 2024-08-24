@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorite App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: peachpuff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            padding: 20px;
+        }
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 20px;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
+        .sender {
+            background-color: pink;
+            align-self: flex-end;
+            text-align: right;
+        }
+        .receiver {
+            background-color: pink;
+            align-self: flex-start;
+            text-align: left;
+        } 
+        .form {
+            display: flex;
+            align-items: center;
+        }
+        .input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            width: calc(100% - 60px);
+            margin-right: 10px;
+            outline: none;
+        }
+        .input:focus {
+            border-color: #888;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            outline: none;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .typing {
+            font-style: italic;
+            color: rgb(109, 74, 103);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <ul id="messages"></ul>
+        <div class="typing" id="typing"></div>
+        <form class="form" action="">
+            <input class="input" autocomplete="off" /><button>Send</button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        var form = document.querySelector('.form');
+        var input = document.querySelector('.input');
+        var messagesList = document.getElementById('messages');
+        var typingElement = document.
+        getElementById('typing');
+        var username = 'user1';
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value) { socket.emit('chat message', { user: username, message: input.value });
+            addMessage(input.value = '');
+            input.value = '';
+            }
+        });
+
+        input.addEventListener('input', function() {
+            socket.emit('typing', 'username');
+        });
+
+    socket.on('chat message', function(data) {
+        if(data.user === username){
+            addMessage(data.message, 'sender');
+        } else {
+            addMessage(data.message, 'receiver');
+        }
+        });
+
+    socket.on('typing', function(user) {
+        if(user !== username){
+            typingElement.textContent = user + ' is typing...';
+            setTimeout(() => {
+                typingElement.textContent = '';
+            }, 2000);
+           }
+        });
+
+       function addMessage(message, senderType) {
+           var item = document.createElement('li');
+            item.textContent = message;
+            item.classList.add(senderType);
+            messagesList.appendChild(item);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+    </script>
+    <script>
+        // Function to get the token from localStorage
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+    
+        // Function to make authenticated requests
+        async function authenticatedFetch(url, options = {}) {
+            const token = getToken();
+            if (!token) {
+                window.location.href = 'index.html'; // Redirect to login if no token
+                return;
+            }
+    
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+    
+            const response = await fetch(url, { ...options, headers });
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = 'index.html'; // Redirect to login if token is invalid
+            }
+            return response;
+        }
+    
+        // Use authenticatedFetch for your API calls
+         authenticatedFetch('/api/messages')
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+    </script>
+</body>
+</html>
