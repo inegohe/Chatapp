@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const http = require("http");
 const path = require("path");
 const socketIo = require("socket.io");
+const Message = require('./models/message');
 const redisAdapter = require("socket.io-redis");
 const rateLimit = require("express-rate-limit");
 const authRoutes = require("./routes/auth");
@@ -19,9 +20,6 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/auth", authRoutes);
 
-// app.use('/api/messages', require('./routes/messages'));
-// app.use('/api/profile', require('./routes/profile'));
-
 app.set('trust proxy', 1);
 
 // Rate Limiting
@@ -34,30 +32,18 @@ app.use(limiter);
 // Socket.io Setup
 io.adapter(redisAdapter({ host: "localhost", port: 6379 }));
 
-io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-        return next(new Error('Authentication error'));
-    }
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) return next(new Error('Authentication error'));
-        socket.userId = decoded.userId;
-        next();
-    });
-});
 io.on("connection", (socket) => {
-    var socket = io({
-        auth: {
-            token: localStorage.getItem('token')
-        }
-    });
     console.log("A user connected");
 
     socket.on("chat message", async (data) => {
-        // Save message to the database
-        const message = new Message({ user: data.user, message: data.message });
-        await message.save();
-        io.emit("chat message", data); // Broadcast message to all connected clients
+        try {
+            // Save message to the database
+            const message = new Message({ user: data.user, message: data.message });
+            await message.save();
+            io.emit("chat message", data); // Broadcast message to all connected clients
+        } catch (err) {
+            console.error("Error saving message:", err);
+        }
     });
 
     socket.on("typing", (user) => {
