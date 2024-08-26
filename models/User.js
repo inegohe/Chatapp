@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.schema;
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -18,17 +18,17 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        default: "default-avatar.png"
+        default:"default-avatar.png"
     },
 });
 
 // Password hashing middleware
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
-    this.password = await bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 12);
     next();
 });
 
 const User = mongoose.model("User", userSchema);
 
-module.exports = ('User', userSchema);
+module.exports = User;

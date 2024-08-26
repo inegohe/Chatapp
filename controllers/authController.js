@@ -10,18 +10,18 @@ const jwt = require("jsonwebtoken");
  * @returns {void}
  */
 exports.signup = async (req, res) => {
-    const { name, email, password } = req.body;
+    const { username, email, password } = req.body;
 
     try {
         // Check if user already exists
         const existingUser = await User.findOne({ email });
-        if (existingUseruser) {
+        if (existingUser) {
             return res.status(400).json({ msg: "User already exists" });
         }
 
         // Create a new user
         const newUser = new User({
-            name,
+            username,
             email,
             password: await bcrypt.hash(password, 12),
         });
@@ -29,7 +29,7 @@ exports.signup = async (req, res) => {
         await newUser.save();
 
         // Create JWT token
-        const payload = { userId: user.id };
+        const payload = { userId: newUser.id };
         const token = jwt.sign(payload, process.env.JWT_SECRET || 'trwebombekueasloab', { expiresIn: '1h' });
 
         res.json({ token });
@@ -46,7 +46,7 @@ exports.signup = async (req, res) => {
  * @param {Object} res - Express response object
  * @returns {void}
  */
-exports.loginUser = async (req, res) => {
+exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
