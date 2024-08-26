@@ -9,24 +9,24 @@ const jwt = require("jsonwebtoken");
  * @param {Object} res - Express response object
  * @returns {void}
  */
-exports.signupUser = async (req, res) => {
+exports.signup = async (req, res) => {
     const { name, email, password } = req.body;
 
     try {
         // Check if user already exists
-        let user = await User.findOneElementById({ email });
-        if (user) {
+        const existingUser = await User.findOne({ email });
+        if (existingUseruser) {
             return res.status(400).json({ msg: "User already exists" });
         }
 
         // Create a new user
-        user = new User({
+        const newUser = new User({
             name,
             email,
-            password: await bcrypt.hash(password, 10),
+            password: await bcrypt.hash(password, 12),
         });
 
-        await user.save();
+        await newUser.save();
 
         // Create JWT token
         const payload = { userId: user.id };
@@ -50,7 +50,7 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findOneElementById({ email });
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ msg: "Invalid credentials" });
         }
