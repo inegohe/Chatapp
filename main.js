@@ -1,4 +1,5 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const http = require("http");
@@ -18,6 +19,7 @@ const io = socketIo(server);
 const JWT_SECRET = process.env.JWT_SECRET || 'trwebombekueasloab';
 
 // Middleware
+app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/auth", authRoutes);

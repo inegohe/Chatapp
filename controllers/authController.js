@@ -47,22 +47,29 @@ exports.signup = async (req, res) => {
  * @returns {void}
  */
 exports.login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body; 
+    console.log("Login request received:", { email, password});
 
     try {
         const user = await User.findOne({ email });
+        console.log("User found:", user);
         if (!user) {
             return res.status(400).json({ msg: "Invalid credentials" });
         }
-
+        
+        console.log("Stored hash:", user.password); console.log("Stored hash:", user.password);
         const isMatch = await bcrypt.compare(password, user.password);
+        console.log("Password match result:", isMatch);
         if (!isMatch) {
+            console.log("Password does not match");
             return res.status(400).json({ msg: "Invalid credentials" });
         }
 
-        // Create JWT token
+        //  JWT token
         const payload = { userId: user.id };
         const token = jwt.sign(payload, process.env.JWT_SECRET || 'trwebombekueasloab', { expiresIn: '1h' });
+        console.log("JWT token created:", token);
+
 
         res.json({ token });
     } catch (err) {
