@@ -26,10 +26,6 @@ app.use("/auth", authRoutes);
 app.use("/api/messages", messagesRoutes);
 app.use("/api/profile", profileRoutes);
 
-// // Import Routes
-// const authRoutes = require("./routes/auth");
-// const messagesRoutes = require("./routes/messages");
-// const profileRoutes = require("./routes/profile");
 
 // Chat route
 app.get("/chat", authenticateToken, (req, res) => {
